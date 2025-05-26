@@ -11,7 +11,7 @@
   },
   "scripts": {
   "start": "node index.js",
-  "postinstall": "yt-dlp --version && ffmpeg -version"
+ 
 }
 
 }
