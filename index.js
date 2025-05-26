@@ -1,26 +1,33 @@
 const express = require("express");
 const ytdlp = require("yt-dlp-exec");
 const fs = require("fs");
+const { exec } = require("child_process");
 
 const app = express();
-// এখানে fixed port এর পরিবর্তে environment variable থেকে Port নিবে
 const port = process.env.PORT || 3000;
 
 app.use(express.static("public"));
 app.use(express.json());
 
+app.get("/check", (req, res) => {
+  exec("yt-dlp --version && ffmpeg -version", (error, stdout, stderr) => {
+    if (error) return res.status(500).send(`Error: ${error.message}`);
+    if (stderr) return res.status(500).send(`Stderr: ${stderr}`);
+    res.send(`Installed Versions:\n${stdout}`);
+  });
+});
+
 app.post("/download", async (req, res) => {
   const videoUrl = req.body.url;
   if (!videoUrl) return res.status(400).send("No URL provided");
 
-  const tempFile = `temp_${Date.now()}.mp4`;
+  const tempFile = `/tmp/temp_${Date.now()}.mp4`;
 
   try {
     await ytdlp(videoUrl, {
       output: tempFile,
       format: "bestvideo+bestaudio/best",
-      mergeOutputFormat: "mp4"
-      // ⚠️ ffmpegLocation লাগবে না, কারণ Docker এর ভেতর ffmpeg থাকবেই
+      mergeOutputFormat: "mp4",
     });
 
     res.download(tempFile, (err) => {
@@ -33,11 +40,9 @@ app.post("/download", async (req, res) => {
       });
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Download failed");
+    console.error("Download failed:", err);
+    res.status(500).send("Download failed: " + err.message);
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+app.listen(port,
