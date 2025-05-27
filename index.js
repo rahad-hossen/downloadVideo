@@ -28,6 +28,7 @@ app.post("/download", async (req, res) => {
       output: tempFile,
       format: "bestvideo+bestaudio/best",
       mergeOutputFormat: "mp4",
+      cookies: 'cookies.txt'
     });
 
     res.download(tempFile, (err) => {
